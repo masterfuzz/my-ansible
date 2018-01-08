@@ -1,0 +1,5 @@
+---
+- hosts: kcgo
+  become: true
+  roles:
+  - elk

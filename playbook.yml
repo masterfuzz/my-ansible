@@ -1,0 +1,31 @@
+---
+- hosts: all
+  become: true
+  roles:
+  - netdata
+- hosts: nginx
+  become: true
+  roles:
+  - role: jdauphant.nginx
+    nginx_sites:
+      default:
+        - listen 80
+        - |
+          location ~ /netdata/(?<ndpath>.*) { proxy_set_header X-Forwarded-Host $host;
+          proxy_set_header X-Forwarded-Server $host;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header Connection "keep-alive";
+          proxy_pass_request_headers on;
+          proxy_redirect off;
+          proxy_pass http://netdata/$ndpath$is_args$args;
+          proxy_http_version 1.1;
+          proxy_store off;
+          gzip on;
+          gzip_proxied any;
+          gzip_types *;
+          }
+    nginx_configs:
+      upstream:
+      - upstream netdata { server unix:/tmp/netdata.sock; keepalive 1024; }
+
+

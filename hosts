@@ -1,0 +1,11 @@
+pi		ansible_connection=local
+
+[logs]
+kcgo
+
+[music]
+pi
+
+[nginx]
+kcgo
+pi

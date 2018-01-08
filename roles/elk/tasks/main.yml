@@ -1,0 +1,57 @@
+---
+- name: "Python pip required"
+  easy_install:
+    name: pip
+    state: latest
+- name: "Docker-py required for docker modules"
+  pip:
+    name: docker-py
+
+- name: "Ensure docker network 'localnet'"
+  docker_network:
+    name: localnet
+    driver: bridge
+    state: present
+
+- name: Set vm.max_map_count for elasticsearch
+  sysctl:
+    name: vm.max_map_count
+    value: 262144
+
+- name: Elasticsearch container
+  docker_container:
+    name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.1.0
+    env:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+    networks:
+      - name: localnet
+- name: Logstash container
+  docker_container:
+    name: logstash
+#    image: docker.elastic.co/logstash/logstash-oss:6.1.0
+    image: logstash
+    env:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    published_ports:
+      - "5000:5000"
+      - "12201:12201/udp"
+    networks:
+      - name: localnet
+- name: Kibana container
+  docker_container:
+    name: kibana
+    image: docker.elastic.co/kibana/kibana-oss:6.1.0
+    published_ports:
+      - "5601:5601"
+    networks:
+      - name: localnet
+
+- name: Test container
+  docker_container:
+    name: hello-test
+    image: hello-world
+    log_driver: gelf
+    log_options:
+      gelf-address: "udp://localhost:12201"
+
